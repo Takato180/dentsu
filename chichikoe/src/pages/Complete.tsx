@@ -34,16 +34,23 @@ export default function Complete() {
   const qas: { question: string; childAnswer: string; fatherAnswer: string }[] = state?.qas ?? []
   const fatherName: string = state?.fatherName || 'お父さん'
   const poem: string = state?.poem || ''
-  const matchCount = Math.floor(qas.length * 0.4)
-  const zureCount = qas.length - matchCount
+  const zureCount: number = state?.zureCount ?? Math.floor(qas.length * 0.6)
+  const matchCount = qas.length - zureCount
 
-  const shareText = `父の日、${fatherName}と答え合わせをしました。\n\n${qas.length}問中、ズレたのは${zureCount}問。\n\n${poem}\n\n#父問 #ズレが愛だった #父の日2026`
+  const shareText = `父の日、${fatherName}と答え合わせをしました。\n\n${qas.length}問中、ズレたのは${zureCount}問。\n\n${poem.split('\n').slice(0, 3).join('\n')}\n\n#父問2026 #ズレが愛だった #ちちとい`
+  const lineText = `父問で、${fatherName}と答え合わせしました。${qas.length}問中${zureCount}問ズレてた。あなたも試してみて→ https://takato180.github.io/dentsu/`
 
   return (
     <div style={s.root}>
       <canvas ref={canvasRef} style={s.canvas} />
 
       <div style={s.content}>
+
+        {/* スポンサーバー */}
+        <div style={s.sponsorBadge}>
+          <span style={s.sponsorText}>presented by NTT docomo</span>
+        </div>
+
         {/* ズレカード */}
         <div style={s.card}>
           <div style={s.cardHeader}>
@@ -65,17 +72,25 @@ export default function Complete() {
             <div style={s.scoreDivider} />
             <div style={s.scoreItem}>
               <p style={s.scoreNum}>{matchCount}</p>
-              <p style={s.scoreLabel}>一致</p>
+              <p style={s.scoreLabel}>共鳴</p>
             </div>
           </div>
 
           {poem && (
             <div style={s.poemBox}>
-              <p style={s.poemText}>{poem}</p>
+              <div style={s.poemVertical}>
+                {poem.split('\n').filter(l => l.trim()).map((line, i) => (
+                  <p key={i} style={s.poemLine}>{line}</p>
+                ))}
+              </div>
             </div>
           )}
 
           <p style={s.cardFooter}>ズレが、愛だった。</p>
+
+          <div style={s.cardQr}>
+            <p style={s.cardQrText}>#父問2026</p>
+          </div>
         </div>
 
         {/* QA list */}
@@ -104,10 +119,30 @@ export default function Complete() {
         <div style={s.shareSection}>
           <p style={s.shareLabel}>シェアする</p>
           <div style={s.shareRow}>
-            <button style={s.shareBtn} onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, '_blank')}>
+            <button style={s.shareBtn} onClick={() =>
+              window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, '_blank')
+            }>
               X (Twitter)
             </button>
+            <button style={{ ...s.shareBtn, background: '#06C755', color: '#fff', border: 'none' }} onClick={() =>
+              window.open(`https://line.me/R/msg/text/?${encodeURIComponent(lineText)}`, '_blank')
+            }>
+              LINE
+            </button>
           </div>
+          <p style={s.screenshotHint}>スクリーンショットしてInstagramストーリーズにも</p>
+        </div>
+
+        {/* docomo CTA */}
+        <div style={s.sponsorCta}>
+          <p style={s.sponsorCtaText}>
+            ズレを埋めるより、<br />
+            ズレたまま、つながろう。
+          </p>
+          <button style={s.sponsorCtaBtn}>
+            ドコモ家族割で今すぐ電話 →
+          </button>
+          <p style={s.sponsorCtaNote}>presented by NTT docomo</p>
         </div>
 
         <button style={s.again} onClick={() => navigate('/demo')}>もう一度やってみる</button>
@@ -120,6 +155,8 @@ const s: Record<string, React.CSSProperties> = {
   root: { minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' },
   canvas: { position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 },
   content: { position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px', padding: '60px 24px 80px', width: '100%', maxWidth: '540px', animation: 'fadeUp 1s ease both' },
+  sponsorBadge: { padding: '6px 16px', border: '1px solid rgba(200,145,58,0.2)', borderRadius: '20px' },
+  sponsorText: { fontSize: '10px', letterSpacing: '0.15em', color: 'var(--text-dimmer)' },
   card: { width: '100%', border: '1px solid rgba(200,145,58,0.3)', borderRadius: '2px', padding: '36px 32px', display: 'flex', flexDirection: 'column', gap: '24px', background: 'rgba(200,145,58,0.03)' },
   cardHeader: { textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '6px' },
   cardDate: { fontSize: '11px', letterSpacing: '0.2em', color: 'var(--amber)', opacity: 0.7 },
@@ -131,8 +168,11 @@ const s: Record<string, React.CSSProperties> = {
   scoreLabel: { fontSize: '11px', letterSpacing: '0.15em', color: 'var(--text-dimmer)' },
   scoreDivider: { width: '1px', height: '40px', background: 'var(--text-dimmer)' },
   poemBox: { padding: '20px 24px', border: '1px solid rgba(200,145,58,0.15)', borderRadius: '2px' },
-  poemText: { fontFamily: 'var(--serif)', fontSize: '14px', lineHeight: 2.3, color: 'rgba(232,224,213,0.75)', fontStyle: 'italic', whiteSpace: 'pre-wrap' as const, textAlign: 'center' },
+  poemVertical: { display: 'flex', flexDirection: 'column', gap: '2px' },
+  poemLine: { fontFamily: 'var(--serif)', fontSize: '14px', lineHeight: 2.3, color: 'rgba(232,224,213,0.75)', fontStyle: 'italic', whiteSpace: 'pre-wrap' as const, textAlign: 'center' },
   cardFooter: { textAlign: 'center', fontSize: '12px', letterSpacing: '0.15em', color: 'var(--amber)', opacity: 0.7 },
+  cardQr: { textAlign: 'center' },
+  cardQrText: { fontSize: '10px', letterSpacing: '0.2em', color: 'var(--text-dimmer)' },
   qaList: { width: '100%', display: 'flex', flexDirection: 'column', gap: '0' },
   qaRow: { padding: '16px 0', borderBottom: '1px solid var(--text-dimmer)', display: 'flex', flexDirection: 'column', gap: '10px' },
   qaQ: { fontSize: '12px', color: 'var(--text-dim)', letterSpacing: '0.04em' },
@@ -145,5 +185,10 @@ const s: Record<string, React.CSSProperties> = {
   shareLabel: { fontSize: '11px', letterSpacing: '0.15em', color: 'var(--text-dimmer)' },
   shareRow: { display: 'flex', gap: '10px' },
   shareBtn: { padding: '10px 24px', border: '1px solid rgba(200,145,58,0.35)', borderRadius: '2px', fontSize: '13px', color: 'var(--amber)', letterSpacing: '0.05em' },
+  screenshotHint: { fontSize: '10px', color: 'var(--text-dimmer)', letterSpacing: '0.06em' },
+  sponsorCta: { width: '100%', padding: '28px', border: '1px solid rgba(200,145,58,0.2)', borderRadius: '2px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', background: 'rgba(200,145,58,0.03)', textAlign: 'center' },
+  sponsorCtaText: { fontFamily: 'var(--serif)', fontSize: '16px', color: 'var(--text)', lineHeight: 2, fontWeight: 300, letterSpacing: '0.03em' },
+  sponsorCtaBtn: { padding: '12px 28px', background: 'var(--amber)', color: '#0a0a0a', borderRadius: '2px', fontSize: '14px', letterSpacing: '0.08em', fontWeight: 400 },
+  sponsorCtaNote: { fontSize: '10px', color: 'var(--text-dimmer)', letterSpacing: '0.1em' },
   again: { fontSize: '13px', color: 'var(--text-dimmer)', textDecoration: 'underline', textDecorationColor: 'var(--text-dimmer)', letterSpacing: '0.06em' },
 }

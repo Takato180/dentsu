@@ -6,67 +6,63 @@ type Step = 'intro' | 'child-answer' | 'send' | 'reveal' | 'poem' | 'call'
 
 interface QA {
   question: string
-  childPrompt: string   // 子に見せる質問
-  fatherPrompt: string  // 父に見せる質問
+  childPrompt: string
+  fatherPrompt: string
   childAnswer: string
   fatherAnswer: string
 }
 
-// ── 感動を誘う5問 ──────────────────────────────────────────────────────────────
+// ── 感情の深い5問（ズレが美しくなる設計）──────────────────────────────────────
 const BASE_QAS: Omit<QA, 'childAnswer' | 'fatherAnswer'>[] = [
   {
-    question: '人生で一番嬉しかった瞬間',
-    childPrompt: 'お父さんが人生で一番嬉しかった瞬間は、どんな時だと思いますか？',
-    fatherPrompt: 'あなたが人生で一番嬉しかった瞬間は、どんな時ですか？',
+    question: 'いちばん古い記憶',
+    childPrompt: 'お父さんとの、いちばん古い記憶は何ですか？',
+    fatherPrompt: 'お子さんとの、いちばん古い記憶は何ですか？',
   },
   {
-    question: '誰にも話したことのない自慢',
-    childPrompt: 'お父さんが、誰にも話したことのない自慢があるとしたら、何だと思いますか？',
-    fatherPrompt: '誰にも話したことのない、あなたの自慢はありますか？',
+    question: '言いそびれていること',
+    childPrompt: 'お父さんが、あなたに本当は言いたかったけど言えなかった言葉があるとしたら、何だと思いますか？',
+    fatherPrompt: 'お子さんに、本当は言いたかったけど言えなかった言葉はありますか？',
   },
   {
-    question: '一番ホッとする瞬間',
-    childPrompt: 'お父さんが一番ホッとするのは、どんな瞬間だと思いますか？',
-    fatherPrompt: 'あなたが一番ホッとするのは、どんな瞬間ですか？',
+    question: '家族は何色',
+    childPrompt: 'お父さんにとって、「家族」とは何色だと思いますか？',
+    fatherPrompt: 'あなたにとって、「家族」とは何色ですか？',
   },
   {
-    question: 'ずっと言いそびれていること',
-    childPrompt: 'お父さんがあなたに、ずっと言いそびれていることがあるとしたら、何だと思いますか？',
-    fatherPrompt: 'お子さんに、ずっと言いそびれていることはありますか？',
+    question: '最後に泣いた時',
+    childPrompt: 'お父さんが泣いているのを、見たことがありますか？あるとしたら、どんな時だったと思いますか？',
+    fatherPrompt: '最後に泣いたのは、いつですか？',
   },
   {
-    question: 'あなたとの一番古い記憶',
-    childPrompt: 'お父さんとの一番古い記憶は何ですか？',
-    fatherPrompt: 'お子さんとの一番古い記憶は何ですか？',
+    question: '生まれ変わっても',
+    childPrompt: 'お父さんに、生まれ変わってもまた会いたいですか？',
+    fatherPrompt: 'お子さんに、生まれ変わってもまた会いたいですか？',
   },
 ]
 
 const FALLBACK_FATHER: string[] = [
-  '会社で一番の契約が取れた時',
-  '無名のまま定年を迎えたこと。誰も気づかなかったけど、家族を守れた',
-  '早朝、誰も起きていない台所でお茶を飲む時',
-  'お前が生まれた日、泣いた。嬉しくて、怖くて',
-  '生まれて三日目、病院で抱いた時。指を握られた',
+  '病院で抱いた時。指を握られた。あの重さは、今でも手の中にある',
+  'ありがとう、と言えたらよかった。毎朝、心の中で言っていた',
+  '深い紺色。夜に似ている。でも、星がある',
+  '定年の日、誰もいない会議室で少しだけ。嬉しくて、怖くて',
+  '会いたい。何度生まれ変わっても',
 ]
 
-const FALLBACK_POEM = `あなたは、お父さんの答えを知っていましたか。
+const FALLBACK_POEM = `お父さんの記憶の中で
+あなたはまだ小さな手をしている
 
-お父さんにとって、人生で一番嬉しかった瞬間は、
-契約書にハンコを押した、あの夜のことでした。
+あなたの記憶の中で
+お父さんはずっと働いている
 
-あなたがまだ言葉も知らない頃のことです。
-その夜、お父さんは何を思っていたのでしょう。
-帰りの電車で、窓に映る自分の顔を見ながら、
-「やっと、守れる」と思っていたのかもしれない。
+ふたりの時間は
+ずっとすれ違っていた
 
-お父さんは、「あなたが生まれた時」とは言いませんでした。
-でもそれは、あなたのことを忘れていたからではない。
+でも
+向いていた方向は
+同じだったかもしれない
 
-父親というのは、愛情を証明するために働くのではなく、
-働くことで、愛情を黙って差し出す生き物なのかもしれません。
-
-ズレていました。
-でも、向いている方向は、ずっと同じだったかもしれない。`
+でも、ふたりは同じ空の下にいる`
 
 // ── API ──────────────────────────────────────────────────────────────────────
 
@@ -76,12 +72,12 @@ async function getFatherAnswers(qas: QA[], apiKey: string): Promise<string[]> {
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
     const prompt = `あなたは65歳の日本人の父親です。不器用で愛情表現が苦手ですが、家族を深く愛しています。
-以下の質問に父親として正直に答えてください。子どもが予想しているものとは「少しズレた」答えになるようにしてください。
-嘘をつくのではなく、父親目線の本音で答えてください。各回答は1〜2文で。
+以下の質問に父親として正直に答えてください。子どもの予想とは「少しズレた」、父親目線の本音で。
+各回答は1〜2文。詩的に、短く。
 
-${qas.map((qa, _i) => `Q: ${qa.fatherPrompt}\n子の予想: ${qa.childAnswer}`).join('\n\n')}
+${qas.map(qa => `Q: ${qa.fatherPrompt}\n子の予想: ${qa.childAnswer}`).join('\n\n')}
 
-Q1〜Q5の答えを1行ずつ出力してください。番号や記号なし。`
+Q1〜Q5の答えを1行ずつ出力。番号・記号なし。`
     const result = await model.generateContent(prompt)
     const lines = result.response.text().trim().split('\n').filter(l => l.trim()).slice(0, qas.length)
     return lines.length === qas.length ? lines : FALLBACK_FATHER
@@ -93,19 +89,30 @@ async function getZurePoem(qas: QA[], apiKey: string): Promise<string> {
   try {
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-    const prompt = `父と子の「答え合わせ」の結果です。このズレを、是枝裕和映画のように静かに、美しく読み解いてください。
+    const prompt = `あなたは日本の現代詩人です。父と子の「答え合わせ」の結果を詩にしてください。
 
-${qas.map(qa => `【${qa.question}】\n子の答え: 「${qa.childAnswer}」\n父の答え: 「${qa.fatherAnswer}」`).join('\n\n')}
+${qas.map(qa => `【${qa.question}】\n子: 「${qa.childAnswer}」\n父: 「${qa.fatherAnswer}」`).join('\n\n')}
 
-ルール：
-・父を弁護しない。ただ解像度を上げる
+制約：
+・ズレを「愛の形の違い」として昇華する。批判しない
 ・「愛してる」とは言わずに愛を感じさせる
-・最後は「今夜」に着地させる
-・200〜250字以内
-・改行を使って詩のリズムにする`
+・5〜8行。句読点は最小限
+・最後の行は必ず「でも、ふたりは同じ空の下にいる」で終わる
+・タイトルなし`
     const result = await model.generateContent(prompt)
     return result.response.text().trim()
   } catch { return FALLBACK_POEM }
+}
+
+// 共鳴率スコア（完全一致でなく、感情的距離を可視化）
+function calcResonance(qas: QA[]): number {
+  const answered = qas.filter(qa => qa.childAnswer && qa.fatherAnswer)
+  if (answered.length === 0) return 0
+  // 最初の2文字が違うほどズレている → 共鳴率低め
+  const matchCount = answered.filter(qa =>
+    qa.childAnswer.slice(0, 3) === qa.fatherAnswer.slice(0, 3)
+  ).length
+  return Math.round((matchCount / answered.length) * 100)
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -124,6 +131,8 @@ export default function Demo() {
   const [poemLines, setPoemLines] = useState<string[]>([])
   const [visibleLines, setVisibleLines] = useState(0)
   const [letterText, setLetterText] = useState('')
+  const [reminderSet, setReminderSet] = useState(false)
+  const [speaking, setSpeaking] = useState(false)
 
   const handleChildAnswer = (val: string) =>
     setQas(prev => prev.map((qa, i) => i === qIndex ? { ...qa, childAnswer: val } : qa))
@@ -140,9 +149,8 @@ export default function Demo() {
     const updated = qas.map((qa, i) => ({ ...qa, fatherAnswer: answers[i] }))
     setQas(updated)
     setLoading(false)
-    // 順番に浮かび上がる
     for (let i = 0; i < updated.length; i++) {
-      await new Promise(r => setTimeout(r, i === 0 ? 600 : 1200))
+      await new Promise(r => setTimeout(r, i === 0 ? 600 : 1300))
       setRevealIndex(i)
     }
   }
@@ -152,20 +160,32 @@ export default function Demo() {
     setLoading(true)
     const p = await getZurePoem(qas, apiKey)
     setPoem(p)
-    const lines = p.split('\n').filter(l => l !== undefined)
+    const lines = p.split('\n')
     setPoemLines(lines)
     setLoading(false)
-    // 一行ずつ現れる
     for (let i = 0; i < lines.length; i++) {
-      await new Promise(r => setTimeout(r, 700 + i * 400))
+      await new Promise(r => setTimeout(r, 500 + i * 500))
       setVisibleLines(i + 1)
     }
-    await new Promise(r => setTimeout(r, 800))
+    await new Promise(r => setTimeout(r, 1000))
     setStep('call')
   }
 
+  const handleSpeak = () => {
+    if (!('speechSynthesis' in window)) return
+    if (speaking) { window.speechSynthesis.cancel(); setSpeaking(false); return }
+    const utter = new SpeechSynthesisUtterance(poem)
+    utter.lang = 'ja-JP'
+    utter.rate = 0.8
+    utter.pitch = 0.9
+    utter.onend = () => setSpeaking(false)
+    setSpeaking(true)
+    window.speechSynthesis.speak(utter)
+  }
+
+  const resonance = calcResonance(qas)
   const zureCount = qas.filter(qa => qa.childAnswer && qa.fatherAnswer &&
-    qa.childAnswer.slice(0, 4) !== qa.fatherAnswer.slice(0, 4)).length
+    qa.childAnswer.slice(0, 3) !== qa.fatherAnswer.slice(0, 3)).length
 
   return (
     <div style={s.root}>
@@ -241,17 +261,18 @@ export default function Demo() {
           <div style={{ ...s.card, ...s.center, animation: 'fadeUp 0.8s ease both' }}>
             <p style={s.stepLabel}>お父さんへ</p>
             <h2 style={s.title}>リンクを送ろう</h2>
-            <p style={s.sub}>理由は書かなくていい。</p>
+            <p style={s.sub}>理由は書かなくていい。アプリ不要。リンクを開くだけ。</p>
             <div style={s.messageBox}>
               <p style={s.messageText}>
                 「一緒にやってほしいことがある。<br />5分だけ時間ちょうだい。」
               </p>
               <div style={s.linkPreview}>
                 <span style={{ fontSize: 12, color: 'var(--amber)' }}>chichitoi.app/f/xxxxxx</span>
+                <span style={{ fontSize: 10, color: 'var(--text-dimmer)', marginLeft: 8 }}>72時間有効</span>
               </div>
             </div>
             <div style={s.btnRow}>
-              <button style={{ ...s.lineBtn }}>LINEで送る</button>
+              <button style={s.lineBtn}>LINEで送る</button>
               <button style={s.primary} onClick={handleReveal}>
                 {deceased ? '父の答えを想像する' : '父が答えた（デモ）→'}
               </button>
@@ -267,22 +288,35 @@ export default function Demo() {
             </p>
             {loading && <div style={s.spinner} />}
 
+            {/* 共鳴率 */}
+            {!loading && revealIndex >= qas.length - 1 && (
+              <div style={s.resonanceBar}>
+                <p style={s.resonanceLabel}>共鳴率</p>
+                <div style={s.resonanceTrack}>
+                  <div style={{ ...s.resonanceFill, width: `${resonance}%` }} />
+                </div>
+                <p style={s.resonanceNum}>{resonance}%</p>
+                <p style={s.resonanceNote}>
+                  {resonance < 30 ? 'ズレが大きいほど、詩は深くなる。' :
+                   resonance < 60 ? 'ふたりの時間は、少しズレていた。' :
+                   'ふたりの答えは、思ったより近かった。'}
+                </p>
+              </div>
+            )}
+
             <div style={s.revealList}>
               {qas.map((qa, i) => (
                 <div key={i} style={s.revealItem}>
-                  {/* 子の答え（常に表示） */}
                   <p style={s.revealQ}>{qa.question}</p>
                   <div style={s.revealChild}>
                     <span style={s.revealLabelChild}>あなた</span>
                     <p style={s.revealTextChild}>{qa.childAnswer}</p>
                   </div>
-
-                  {/* 父の答え（順番に浮かび上がる） */}
                   <div style={{
                     ...s.revealFather,
                     opacity: revealIndex >= i ? 1 : 0,
-                    transform: revealIndex >= i ? 'translateY(0)' : 'translateY(10px)',
-                    transition: 'all 0.9s ease',
+                    transform: revealIndex >= i ? 'translateY(0)' : 'translateY(12px)',
+                    transition: 'all 1s ease',
                   }}>
                     <span style={s.revealLabelFather}>{fatherName || '父'}</span>
                     <p style={s.revealTextFather}>
@@ -315,7 +349,7 @@ export default function Demo() {
                   <p key={i} style={{
                     ...s.poemLine,
                     opacity: i < visibleLines ? 1 : 0,
-                    transition: 'opacity 0.8s ease',
+                    transition: 'opacity 0.9s ease',
                     minHeight: line === '' ? '1em' : 'auto',
                   }}>
                     {line || '\u00A0'}
@@ -335,6 +369,11 @@ export default function Demo() {
                   {line || '\u00A0'}
                 </p>
               ))}
+              {'speechSynthesis' in window && (
+                <button style={s.speakBtn} onClick={handleSpeak}>
+                  {speaking ? '■ 停止' : '▶ 詩を声で聴く'}
+                </button>
+              )}
             </div>
 
             <div style={s.callSection}>
@@ -352,13 +391,23 @@ export default function Demo() {
                   />
                 </div>
               ) : (
-                <p style={s.callHint}>（声、聞きたくなったら）</p>
-              )}
-
-              {!deceased && (
-                <button style={s.callBtn}>
-                  📞 {fatherName || 'お父さん'}に電話する
-                </button>
+                <>
+                  <p style={s.callHint}>（声、聞きたくなったら）</p>
+                  <div style={s.callBtnRow}>
+                    <button style={s.callBtn}>
+                      📞 {fatherName || 'お父さん'}に電話する
+                    </button>
+                    {!reminderSet ? (
+                      <button style={s.callGhost} onClick={() => setReminderSet(true)}>
+                        あとで電話する →
+                      </button>
+                    ) : (
+                      <p style={{ fontSize: 12, color: 'var(--amber)', letterSpacing: '0.06em' }}>
+                        今夜8時にリマインドします
+                      </p>
+                    )}
+                  </div>
+                </>
               )}
             </div>
 
@@ -415,6 +464,12 @@ const s: Record<string, React.CSSProperties> = {
   messageText: { fontFamily: 'var(--serif)', fontSize: '18px', color: 'var(--text)', lineHeight: 2, fontWeight: 300 },
   linkPreview: { padding: '10px 16px', background: 'rgba(200,145,58,0.06)', borderRadius: '2px', textAlign: 'center' },
   lineBtn: { padding: '13px 22px', background: '#06C755', color: '#fff', borderRadius: '2px', fontSize: '14px', letterSpacing: '0.05em', fontWeight: 400 },
+  resonanceBar: { display: 'flex', flexDirection: 'column' as const, gap: '8px', padding: '20px 24px', border: '1px solid rgba(200,145,58,0.15)', borderRadius: '2px', background: 'rgba(200,145,58,0.02)' },
+  resonanceLabel: { fontSize: '10px', letterSpacing: '0.2em', color: 'var(--amber)' },
+  resonanceTrack: { height: '3px', background: 'var(--text-dimmer)', borderRadius: '2px', overflow: 'hidden' },
+  resonanceFill: { height: '100%', background: 'var(--amber)', borderRadius: '2px', transition: 'width 1.2s ease' },
+  resonanceNum: { fontFamily: 'var(--serif)', fontSize: '22px', color: 'var(--text)' },
+  resonanceNote: { fontSize: '12px', color: 'var(--text-dim)', letterSpacing: '0.04em', lineHeight: 1.7 },
   revealList: { display: 'flex', flexDirection: 'column' as const, gap: '0' },
   revealItem: { padding: '20px 0', borderBottom: '1px solid var(--text-dimmer)', display: 'flex', flexDirection: 'column' as const, gap: '12px' },
   revealQ: { fontSize: '11px', letterSpacing: '0.1em', color: 'var(--amber)', opacity: 0.8 },
@@ -425,12 +480,15 @@ const s: Record<string, React.CSSProperties> = {
   revealLabelFather: { fontSize: '10px', letterSpacing: '0.12em', color: 'var(--amber)' },
   revealTextFather: { fontFamily: 'var(--serif)', fontSize: '17px', color: 'var(--text)', lineHeight: 1.9 },
   spinner: { width: '40px', height: '40px', borderRadius: '50%', border: '2px solid var(--text-dimmer)', borderTopColor: 'var(--amber)', animation: 'rotateSlow 1s linear infinite', alignSelf: 'center' as const },
-  poemBox: { padding: '0 8px', maxWidth: '440px', textAlign: 'left' as const },
-  poemLine: { fontFamily: 'var(--serif)', fontSize: '15px', lineHeight: 2.4, color: 'rgba(232,224,213,0.8)', fontWeight: 300, letterSpacing: '0.03em' },
+  poemBox: { padding: '0 8px', maxWidth: '440px', textAlign: 'left' as const, display: 'flex', flexDirection: 'column' as const, gap: '4px' },
+  poemLine: { fontFamily: 'var(--serif)', fontSize: '15px', lineHeight: 2.4, color: 'rgba(232,224,213,0.85)', fontWeight: 300, letterSpacing: '0.03em' },
+  speakBtn: { marginTop: '16px', alignSelf: 'flex-start' as const, fontSize: '11px', letterSpacing: '0.1em', color: 'var(--amber)', border: '1px solid rgba(200,145,58,0.3)', borderRadius: '2px', padding: '6px 14px' },
   callSection: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '20px', marginTop: '16px' },
   callMain: { fontFamily: 'var(--serif)', fontSize: 'clamp(20px,3vw,28px)', color: 'var(--text)', letterSpacing: '0.05em', lineHeight: 1.8 },
   callHint: { fontSize: '12px', color: 'var(--text-dimmer)', letterSpacing: '0.1em' },
+  callBtnRow: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '12px' },
   callBtn: { padding: '16px 48px', background: 'var(--amber)', color: '#0a0a0a', borderRadius: '2px', fontSize: '16px', letterSpacing: '0.08em', fontWeight: 400 },
+  callGhost: { fontSize: '12px', color: 'var(--text-dimmer)', textDecoration: 'underline', letterSpacing: '0.06em' },
   deceasedBox: { display: 'flex', flexDirection: 'column' as const, gap: '12px', width: '100%', maxWidth: '380px' },
   deceasedLabel: { fontSize: '13px', color: 'var(--text-dim)', letterSpacing: '0.04em', lineHeight: 1.9 },
   cardLink: { fontSize: '12px', color: 'var(--text-dimmer)', textDecoration: 'underline', textDecorationColor: 'var(--text-dimmer)', letterSpacing: '0.06em' },
