@@ -5,7 +5,7 @@ import Complete from './pages/Complete'
 
 export default function App() {
   return (
-    <BrowserRouter basename="/dentsu">
+    <BrowserRouter basename="/ChichiLog">
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/demo" element={<Demo />} />

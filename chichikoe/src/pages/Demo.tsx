@@ -225,7 +225,7 @@ export default function Demo() {
   return (
     <div style={s.root}>
       <div style={s.header}>
-        <a href="/dentsu/" style={s.back}>← 父問</a>
+        <a href="/ChichiLog/" style={s.back}>← 父問</a>
         <StepDots step={step} />
       </div>
 

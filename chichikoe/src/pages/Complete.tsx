@@ -39,7 +39,7 @@ export default function Complete() {
   const unsaidMsg: string = state?.unsaidMsg || ''
 
   const shareText = `父の日、${fatherName}と答え合わせをしました。\n\n${qas.length}問中、ズレたのは${zureCount}問。\n${unsaidMsg ? `\nAIが見つけた言葉：「${unsaidMsg}」\n` : ''}\n${poem.split('\n').slice(0, 2).join('\n')}\n\n#父問2026 #ズレが愛だった #ちちとい`
-  const lineText = `父問で、${fatherName}と答え合わせしました。${qas.length}問中${zureCount}問ズレてた。あなたも試してみて→ https://takato180.github.io/dentsu/`
+  const lineText = `父問で、${fatherName}と答え合わせしました。${qas.length}問中${zureCount}問ズレてた。あなたも試してみて→ https://takato180.github.io/ChichiLog/`
 
   return (
     <div style={s.root}>
