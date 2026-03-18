@@ -72,20 +72,33 @@ export default function Landing() {
         <span style={styles.logo}>チチコエ</span>
       </nav>
 
+      {/* ── Remotion ピッチ動画（最上部） ── */}
+      <section style={styles.videoSection}>
+        <div style={styles.videoWrap}>
+          <Player
+            component={ChichikoePitch}
+            durationInFrames={4050}
+            compositionWidth={960}
+            compositionHeight={540}
+            fps={30}
+            style={{ width: '100%' }}
+            controls
+          />
+        </div>
+      </section>
+
+      {/* hero text + CTA */}
       <main style={styles.main}>
         <div style={{ ...styles.eyebrow, animation: visible ? 'fadeUp 1s ease both' : 'none' }}>
           父の日 2026.6.21
         </div>
-
         <h1 style={{ ...styles.title, animation: visible ? 'fadeUp 1.2s ease 0.2s both' : 'none' }}>
           お父さんの声を、<br />未来へ遺す。
         </h1>
-
         <p style={{ ...styles.sub, animation: visible ? 'fadeUp 1.2s ease 0.4s both' : 'none' }}>
           「もっと話を聞いておけばよかった」<br />
           そう後悔する前に、今日から始めよう。
         </p>
-
         <div style={{ ...styles.ctaRow, animation: visible ? 'fadeUp 1.2s ease 0.6s both' : 'none' }}>
           <button style={styles.ctaPrimary} onClick={() => navigate('/demo')}>
             はじめる
@@ -97,23 +110,6 @@ export default function Landing() {
           </button>
         </div>
       </main>
-
-      {/* ── Remotion ピッチ動画 ── */}
-      <section style={styles.videoSection}>
-        <p style={styles.videoLabel}>— STORY —</p>
-        <div style={styles.videoWrap}>
-          <Player
-            component={ChichikoePitch}
-            durationInFrames={520}
-            compositionWidth={960}
-            compositionHeight={540}
-            fps={30}
-            style={{ width: '100%', borderRadius: 2 }}
-            controls
-            loop
-          />
-        </div>
-      </section>
 
       <section id="about" style={styles.about}>
         <div style={styles.aboutGrid}>
@@ -317,24 +313,16 @@ const styles: Record<string, React.CSSProperties> = {
   videoSection: {
     position: 'relative',
     zIndex: 10,
-    maxWidth: '960px',
-    margin: '0 auto',
-    padding: '0 24px 80px',
     width: '100%',
-  },
-  videoLabel: {
-    fontSize: '11px',
-    letterSpacing: '0.2em',
-    color: 'var(--amber)',
-    textAlign: 'center' as const,
-    marginBottom: '24px',
+    maxWidth: '1080px',
+    margin: '0 auto',
+    padding: '0 0 0',
   },
   videoWrap: {
     width: '100%',
-    border: '1px solid var(--text-dimmer)',
-    borderRadius: '2px',
     overflow: 'hidden',
     background: '#080807',
+    borderBottom: '1px solid var(--text-dimmer)',
   },
   footer: {
     position: 'relative',
