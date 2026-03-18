@@ -85,6 +85,7 @@ export default function Landing() {
         <div style={{ ...styles.videoWrap, animation: visible ? 'fadeUp 1.2s ease 0.35s both' : 'none' }}>
           <Player
             component={ChichikoePitch}
+            inputProps={{ bgmUrl: import.meta.env.BASE_URL + 'bgm.mp3' }}
             durationInFrames={1800}
             compositionWidth={960}
             compositionHeight={540}

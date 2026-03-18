@@ -222,13 +222,12 @@ const SCENE_DEFS = [
   { Comp: Scene7, inF: S.s7In, outF: S.s7Out },
 ]
 
-export const ChichikoePitch: React.FC = () => {
+export const ChichikoePitch: React.FC<{ bgmUrl?: string }> = ({ bgmUrl }) => {
   const frame = useCurrentFrame()
 
   return (
     <AbsoluteFill style={{ background: '#080807' }}>
-      {/* BGM: 直接パスで指定 */}
-      <Audio src="/bgm.mp3" volume={0.65} />
+      {bgmUrl && <Audio src={bgmUrl} volume={0.65} />}
 
       {/* vignette */}
       <div style={{
