@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Player } from '@remotion/player'
+import { ChichikoePitch } from '../remotion/ChichikoePitch'
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -95,6 +97,23 @@ export default function Landing() {
           </button>
         </div>
       </main>
+
+      {/* ── Remotion ピッチ動画 ── */}
+      <section style={styles.videoSection}>
+        <p style={styles.videoLabel}>— STORY —</p>
+        <div style={styles.videoWrap}>
+          <Player
+            component={ChichikoePitch}
+            durationInFrames={520}
+            compositionWidth={960}
+            compositionHeight={540}
+            fps={30}
+            style={{ width: '100%', borderRadius: 2 }}
+            controls
+            loop
+          />
+        </div>
+      </section>
 
       <section id="about" style={styles.about}>
         <div style={styles.aboutGrid}>
@@ -294,6 +313,28 @@ const styles: Record<string, React.CSSProperties> = {
   startBtn: {
     display: 'flex',
     justifyContent: 'center',
+  },
+  videoSection: {
+    position: 'relative',
+    zIndex: 10,
+    maxWidth: '960px',
+    margin: '0 auto',
+    padding: '0 24px 80px',
+    width: '100%',
+  },
+  videoLabel: {
+    fontSize: '11px',
+    letterSpacing: '0.2em',
+    color: 'var(--amber)',
+    textAlign: 'center' as const,
+    marginBottom: '24px',
+  },
+  videoWrap: {
+    width: '100%',
+    border: '1px solid var(--text-dimmer)',
+    borderRadius: '2px',
+    overflow: 'hidden',
+    background: '#080807',
   },
   footer: {
     position: 'relative',
