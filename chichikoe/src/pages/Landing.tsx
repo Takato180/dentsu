@@ -78,7 +78,7 @@ export default function Landing() {
 
       <main style={s.main}>
         <p style={{ ...s.eyebrow, animation: visible ? 'fadeUp 1s ease both' : 'none' }}>
-          父の日 2026.6.21 — その日だけ開きます
+          社会人になってから、父に電話できていない人へ — 父の日 2026.6.21
         </p>
 
         <h1 style={{ ...s.title, animation: visible ? 'fadeUp 1.2s ease 0.2s both' : 'none' }}>
@@ -87,8 +87,9 @@ export default function Landing() {
         </h1>
 
         <p style={{ ...s.sub, animation: visible ? 'fadeUp 1.2s ease 0.35s both' : 'none' }}>
-          5つの問いが、30年分のズレを詩にする。<br />
-          参加するのは5分。伝わるのは、一生分。
+          5つの問いに、父と子が別々に答える。<br />
+          ズレがわかる。言えなかった言葉が見つかる。<br />
+          関係は、そこから変わりはじめる。
         </p>
 
         {/* 動画 */}
@@ -147,17 +148,20 @@ export default function Landing() {
             父問では、父は一人で、自分のペースで、<br />
             誰にも邪魔されず、正直に向き合います。<br /><br />
             AIが生む詩は、あなたたちの会話の「代わり」ではなく、<br />
-            会話を「始める理由」です。
+            会話を「始める理由」です。<br /><br />
+            AIはさらに、あなたの回答の奥から<br />
+            言いそびれていた言葉を一文で抽出します。<br />
+            送るかどうかは、あなたが決める。
           </p>
         </div>
 
         <div style={s.insight}>
-          <p style={s.insightQ}>「お父さんの記憶の中のあなたは、</p>
-          <p style={s.insightQ}>まだ生まれたての頃のまま止まっています。」</p>
-          <p style={s.insightSub}>— AIが読み解いたズレより</p>
+          <p style={s.insightQ}>「父は、毎朝ありがとうと言っていた。</p>
+          <p style={s.insightQ}>声に出さないまま。」</p>
+          <p style={s.insightSub}>— 父問デモより、AIが生成した詩の一節</p>
           <p style={s.insightA}>
-            父と子のズレは、すれ違いではない。<br />
-            それぞれが、止まった時間の中で互いを想い続けた証拠だ。
+            これは架空ではない。<br />
+            実際に答えると、AIはあなたと父のズレをこう読み解く。
           </p>
         </div>
 
@@ -190,7 +194,7 @@ const STATS = [
 const STEPS = [
   { title: 'あなたが答える', desc: 'お父さんについての5つの問いに、あなたが一人で答える。父は何も知らない。' },
   { title: '父にリンクを送る', desc: '「一緒にやってほしいことがある」それだけ送る。理由は書かない。父はリンクを開くだけ。アプリ不要。' },
-  { title: 'ズレを、知る', desc: '両方が答えると、AIがズレを「詩」として読み解く。そして電話するかどうかを、あなたが決める。' },
+  { title: 'ズレを、知る', desc: '両方が答えると、AIがズレを「詩」として読み解く。そしてAIは、あなたがずっと言えなかった言葉を見つけ出す。その言葉を、今日だけ送れる。' },
 ]
 
 const s: Record<string, React.CSSProperties> = {

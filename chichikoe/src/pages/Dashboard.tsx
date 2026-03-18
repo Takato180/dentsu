@@ -6,6 +6,7 @@ const METRICS = [
   { label: '参加者数', value: 12847, unit: '人', note: 'ローンチ14日間' },
   { label: '父への送信完了', value: 8203, unit: '件', note: '完了率 63.8%' },
   { label: '詩の生成数', value: 7891, unit: '件', note: '' },
+  { label: '未送信メッセージ送信', value: 5102, unit: '件', note: '送信率 64.6%' },
   { label: 'ズレカードシェア', value: 4204, unit: '件', note: 'シェア率 53.3%' },
   { label: '電話CTA達成', value: 2109, unit: '件', note: '達成率 26.7%' },
   { label: 'SNSリーチ推計', value: 2300000, unit: '', note: 'カード経由' },
@@ -93,6 +94,7 @@ export default function Dashboard() {
               { label: '参加', value: 12847, pct: 100 },
               { label: '送信完了', value: 8203, pct: 63.8 },
               { label: '詩生成', value: 7891, pct: 61.4 },
+              { label: '言葉送信', value: 5124, pct: 39.9 },
               { label: 'シェア', value: 4204, pct: 32.7 },
               { label: '電話', value: 2109, pct: 16.4 },
             ].map((row, i) => (
@@ -170,9 +172,9 @@ export default function Dashboard() {
           <p style={s.sectionLabel}>SPONSOR PROPOSAL</p>
           <div style={s.clientGrid}>
             {[
-              { brand: 'NTT docomo', reason: '家族割 × 電話CTA。通話完了＝コンバージョン。「家族とつながる」ブランド価値と直結。' },
-              { brand: '明治安田生命', reason: '「父の日プレゼント保険」へのリード獲得。詩の後に「安心も、贈れる」メッセージ自然挿入。' },
-              { brand: 'サントリー プレモル', reason: 'ズレカード完成後「このズレを、乾杯で埋めよう」EC誘導。父の日ギフトセット直接販売。' },
+              { brand: 'NTT docomo', reason: '①電話CTA（家族割）②AIが抽出した「未送信の言葉」のLINE送信完了＝2段階コンバージョン。「家族とつながる」ブランド価値と完全一致。' },
+              { brand: '明治安田生命', reason: '詩 → 未送信の言葉 → 「想いと一緒に安心を」でリード獲得。感情的ピークでの自然な保険訴求。「あとで電話」リマインダー登録でopt-in獲得。' },
+              { brand: 'サントリー プレモル', reason: 'ズレカード完成後「このズレを、乾杯で埋めよう」EC誘導。父の日ギフトセット直接販売。シェア率×SNSリーチで純広告不要の拡散。' },
             ].map((c, i) => (
               <div key={i} style={s.clientCard}>
                 <p style={s.clientBrand}>{c.brand}</p>

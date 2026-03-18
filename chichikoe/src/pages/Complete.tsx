@@ -31,13 +31,14 @@ export default function Complete() {
     return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
   }, [])
 
-  const qas: { question: string; childAnswer: string; fatherAnswer: string }[] = state?.qas ?? []
+  const qas: { question: string; childPrompt?: string; childAnswer: string; fatherAnswer: string }[] = state?.qas ?? []
   const fatherName: string = state?.fatherName || 'お父さん'
   const poem: string = state?.poem || ''
   const zureCount: number = state?.zureCount ?? Math.floor(qas.length * 0.6)
   const matchCount = qas.length - zureCount
+  const unsaidMsg: string = state?.unsaidMsg || ''
 
-  const shareText = `父の日、${fatherName}と答え合わせをしました。\n\n${qas.length}問中、ズレたのは${zureCount}問。\n\n${poem.split('\n').slice(0, 3).join('\n')}\n\n#父問2026 #ズレが愛だった #ちちとい`
+  const shareText = `父の日、${fatherName}と答え合わせをしました。\n\n${qas.length}問中、ズレたのは${zureCount}問。\n${unsaidMsg ? `\nAIが見つけた言葉：「${unsaidMsg}」\n` : ''}\n${poem.split('\n').slice(0, 2).join('\n')}\n\n#父問2026 #ズレが愛だった #ちちとい`
   const lineText = `父問で、${fatherName}と答え合わせしました。${qas.length}問中${zureCount}問ズレてた。あなたも試してみて→ https://takato180.github.io/dentsu/`
 
   return (
@@ -86,6 +87,13 @@ export default function Complete() {
             </div>
           )}
 
+          {unsaidMsg && (
+            <div style={s.unsaidOnCard}>
+              <p style={s.unsaidOnCardLabel}>言いそびれていた言葉</p>
+              <p style={s.unsaidOnCardText}>「{unsaidMsg}」</p>
+            </div>
+          )}
+
           <p style={s.cardFooter}>ズレが、愛だった。</p>
 
           <div style={s.cardQr}>
@@ -98,7 +106,7 @@ export default function Complete() {
           <div style={s.qaList}>
             {qas.map((qa, i) => (
               <div key={i} style={s.qaRow}>
-                <p style={s.qaQ}>{qa.question}</p>
+                <p style={s.qaQ}>{qa.childPrompt ?? qa.question}</p>
                 <div style={s.qaPair}>
                   <div style={s.qaBox}>
                     <p style={s.qaLabel}>あなた</p>
@@ -140,7 +148,7 @@ export default function Complete() {
             ズレたまま、つながろう。
           </p>
           <button style={s.sponsorCtaBtn}>
-            ドコモ家族割で今すぐ電話 →
+            家族割で、もっと気軽に電話できる
           </button>
           <p style={s.sponsorCtaNote}>presented by NTT docomo</p>
         </div>
@@ -170,6 +178,9 @@ const s: Record<string, React.CSSProperties> = {
   poemBox: { padding: '20px 24px', border: '1px solid rgba(200,145,58,0.15)', borderRadius: '2px' },
   poemVertical: { display: 'flex', flexDirection: 'column', gap: '2px' },
   poemLine: { fontFamily: 'var(--serif)', fontSize: '14px', lineHeight: 2.3, color: 'rgba(232,224,213,0.75)', fontStyle: 'italic', whiteSpace: 'pre-wrap' as const, textAlign: 'center' },
+  unsaidOnCard: { padding: '16px 20px', background: 'rgba(200,145,58,0.06)', borderRadius: '2px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '6px' },
+  unsaidOnCardLabel: { fontSize: '9px', letterSpacing: '0.2em', color: 'var(--amber)', opacity: 0.7 },
+  unsaidOnCardText: { fontFamily: 'var(--serif)', fontSize: '15px', color: 'var(--text)', lineHeight: 1.9, fontStyle: 'italic' },
   cardFooter: { textAlign: 'center', fontSize: '12px', letterSpacing: '0.15em', color: 'var(--amber)', opacity: 0.7 },
   cardQr: { textAlign: 'center' },
   cardQrText: { fontSize: '10px', letterSpacing: '0.2em', color: 'var(--text-dimmer)' },

@@ -76,7 +76,7 @@ function Scene2({ f }: { f: number }) {
 
 // ── Scene 3: 問いが現れる → 子が答える
 function Scene3({ f }: { f: number }) {
-  const typed = '私が生まれた日'
+  const typed = '照れくさいから、何も言えなかったと思う'
   const chars = typed.split('')
   const typeStart = 100
   const typeSpeed = 6
@@ -92,7 +92,7 @@ function Scene3({ f }: { f: number }) {
           ...fu(f, 20),
         }}>
           <p style={{ ...T.serif, fontSize: 18, lineHeight: 2 }}>
-            お父さんが人生で一番<br />嬉しかった瞬間は？
+            お父さんが、本当は言いたかったけど<br />言えなかった言葉は何だと思いますか？
           </p>
         </div>
 
@@ -139,10 +139,10 @@ function Scene4({ f }: { f: number }) {
             borderRadius: 2, background: 'rgba(200,145,58,0.03)',
           }}>
             <p style={{ ...T.serif, fontSize: 16, color: 'rgba(232,224,213,0.7)', marginBottom: 12 }}>
-              お父さんが人生で一番嬉しかった瞬間は？
+              お子さんに、言いたかったけど言えなかった言葉はありますか？
             </p>
             <p style={{ ...T.serif, fontSize: 20, color: '#e8e0d5', ...fu(f, 140) }}>
-              「会社で一番の契約が取れた時」
+              「ありがとうと。毎朝、心の中で言っていた」
             </p>
           </div>
         </div>
@@ -168,7 +168,7 @@ function Scene5({ f }: { f: number }) {
             ...fu(f, 20),
           }}>
             <p style={{ ...T.label, marginBottom: 12, textAlign: 'left' }}>あなた</p>
-            <p style={{ ...T.serif, fontSize: 16, color: '#e8e0d5', textAlign: 'left' }}>私が生まれた日</p>
+            <p style={{ ...T.serif, fontSize: 15, color: '#e8e0d5', textAlign: 'left' }}>照れくさいから、<br />何も言えなかったと思う</p>
           </div>
 
           {/* ズレ表示 */}
@@ -193,8 +193,8 @@ function Scene5({ f }: { f: number }) {
             ...fu(f, 20),
           }}>
             <p style={{ ...T.label, marginBottom: 12, textAlign: 'right' }}>お父さん</p>
-            <p style={{ ...T.serif, fontSize: 16, color: '#e8e0d5', textAlign: 'right' }}>
-              仕事で大きな<br />契約が取れた時
+            <p style={{ ...T.serif, fontSize: 15, color: '#e8e0d5', textAlign: 'right' }}>
+              ありがとうと、<br />毎朝、心の中で<br />言っていた
             </p>
           </div>
         </div>
@@ -223,12 +223,14 @@ function Scene6({ f }: { f: number }) {
           background: 'rgba(200,145,58,0.03)',
           ...fu(f, 20),
         }}>
-          <p style={{ ...T.serif, fontSize: 15, lineHeight: 2.2, color: 'rgba(232,224,213,0.8)', fontStyle: 'italic' }}>
-            「お父さんの記憶の中のあなたは、<br />
-            まだ生まれたての頃のまま止まっています。<br />
-            あなたの記憶の中の父は、<br />
-            いつも仕事をしている背中でした。<br />
-            ふたりとも、同じくらい<br />お互いを想っていた。」
+          <p style={{ ...T.serif, fontSize: 15, lineHeight: 2.4, color: 'rgba(232,224,213,0.8)', fontStyle: 'italic' }}>
+            父は、毎朝ありがとうと言っていた<br />
+            声に出さないまま<br />
+            <br />
+            子は、父を不器用だと思っていた<br />
+            それが愛だとは知らないまま<br />
+            <br />
+            でも、ふたりは同じ空の下にいる
           </p>
         </div>
         <div style={{ width: 36, height: 1, background: 'rgba(200,145,58,0.3)', margin: '32px 0', ...fu(f, 100) }} />
@@ -265,8 +267,14 @@ function Scene7({ f }: { f: number }) {
         <p style={{ ...T.serifBig, fontSize: 32, marginTop: 14, ...fu(f, 44) }}>
           ズレが、愛だった。
         </p>
+        <p style={{ ...T.caption, marginTop: 16, ...fu(f, 64) }}>
+          答え合わせが終わると、関係は変わりはじめる。
+        </p>
         <p style={{ ...T.caption, marginTop: 28, ...fu(f, 72) }}>
-          父の日 2026.6.21 — その日だけ開きます
+          2026.6.21 父の日 — AIがズレを詩にする
+        </p>
+        <p style={{ ...T.caption, marginTop: 4, ...fu(f, 88), opacity: fi(f, 0, 0.6, 88, 108) }}>
+          言いそびれていた言葉も、今日だけ届けられる
         </p>
         <div style={{
           marginTop: 40, padding: '13px 40px',
