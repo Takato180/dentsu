@@ -72,22 +72,7 @@ export default function Landing() {
         <span style={styles.logo}>チチコエ</span>
       </nav>
 
-      {/* ── Remotion ピッチ動画（最上部） ── */}
-      <section style={styles.videoSection}>
-        <div style={styles.videoWrap}>
-          <Player
-            component={ChichikoePitch}
-            durationInFrames={4050}
-            compositionWidth={960}
-            compositionHeight={540}
-            fps={30}
-            style={{ width: '100%' }}
-            controls
-          />
-        </div>
-      </section>
-
-      {/* hero text + CTA */}
+      {/* hero text + video + CTA */}
       <main style={styles.main}>
         <div style={{ ...styles.eyebrow, animation: visible ? 'fadeUp 1s ease both' : 'none' }}>
           父の日 2026.6.21
@@ -95,11 +80,21 @@ export default function Landing() {
         <h1 style={{ ...styles.title, animation: visible ? 'fadeUp 1.2s ease 0.2s both' : 'none' }}>
           お父さんの声を、<br />未来へ遺す。
         </h1>
-        <p style={{ ...styles.sub, animation: visible ? 'fadeUp 1.2s ease 0.4s both' : 'none' }}>
-          「もっと話を聞いておけばよかった」<br />
-          そう後悔する前に、今日から始めよう。
-        </p>
-        <div style={{ ...styles.ctaRow, animation: visible ? 'fadeUp 1.2s ease 0.6s both' : 'none' }}>
+
+        {/* ── Remotion ピッチ動画 ── */}
+        <div style={{ ...styles.videoWrap, animation: visible ? 'fadeUp 1.2s ease 0.35s both' : 'none' }}>
+          <Player
+            component={ChichikoePitch}
+            durationInFrames={1800}
+            compositionWidth={960}
+            compositionHeight={540}
+            fps={30}
+            style={{ width: '100%' }}
+            controls
+          />
+        </div>
+
+        <div style={{ ...styles.ctaRow, animation: visible ? 'fadeUp 1.2s ease 0.5s both' : 'none' }}>
           <button style={styles.ctaPrimary} onClick={() => navigate('/demo')}>
             はじめる
           </button>
@@ -310,19 +305,14 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     justifyContent: 'center',
   },
-  videoSection: {
-    position: 'relative',
-    zIndex: 10,
-    width: '100%',
-    maxWidth: '1080px',
-    margin: '0 auto',
-    padding: '0 0 0',
-  },
   videoWrap: {
     width: '100%',
+    maxWidth: '800px',
     overflow: 'hidden',
     background: '#080807',
-    borderBottom: '1px solid var(--text-dimmer)',
+    border: '1px solid var(--text-dimmer)',
+    borderRadius: '2px',
+    opacity: 0,
   },
   footer: {
     position: 'relative',
