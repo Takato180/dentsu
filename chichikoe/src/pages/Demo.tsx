@@ -294,24 +294,40 @@ export default function Demo() {
         {/* ── SEND ── */}
         {step === 'send' && (
           <div style={{ ...s.card, ...s.center, animation: 'fadeUp 0.8s ease both' }}>
-            <p style={s.stepLabel}>お父さんへ</p>
-            <h2 style={s.title}>リンクを送ろう</h2>
-            <p style={s.sub}>理由は書かなくていい。アプリ不要。リンクを開くだけ。</p>
-            <div style={s.messageBox}>
-              <p style={s.messageText}>
-                「一緒にやってほしいことがある。<br />5分だけ時間ちょうだい。」
-              </p>
-              <div style={s.linkPreview}>
-                <span style={{ fontSize: 12, color: 'var(--amber)' }}>chichitoi.app/f/xxxxxx</span>
-                <span style={{ fontSize: 10, color: 'var(--text-dimmer)', marginLeft: 8 }}>72時間有効</span>
-              </div>
-            </div>
-            <div style={s.btnRow}>
-              <button style={s.lineBtn}>LINEで送る</button>
-              <button style={s.primary} onClick={handleReveal}>
-                {deceased ? '父の答えを想像する' : '父が答えた（デモ）→'}
-              </button>
-            </div>
+            {deceased ? (
+              <>
+                <p style={s.stepLabel}>もし、答えてくれたなら</p>
+                <h2 style={s.title}>{fatherName || 'お父さん'}ならどう答えただろう</h2>
+                <p style={s.sub}>
+                  AIが、あなたの記憶の中の{fatherName || 'お父さん'}として<br />
+                  5つの問いに答えます。
+                </p>
+                <button style={{ ...s.primary, alignSelf: 'center' }} onClick={handleReveal}>
+                  答えを想像する →
+                </button>
+              </>
+            ) : (
+              <>
+                <p style={s.stepLabel}>お父さんへ</p>
+                <h2 style={s.title}>リンクを送ろう</h2>
+                <p style={s.sub}>理由は書かなくていい。アプリ不要。リンクを開くだけ。</p>
+                <div style={s.messageBox}>
+                  <p style={s.messageText}>
+                    「一緒にやってほしいことがある。<br />5分だけ時間ちょうだい。」
+                  </p>
+                  <div style={s.linkPreview}>
+                    <span style={{ fontSize: 12, color: 'var(--amber)' }}>chichitoi.app/f/xxxxxx</span>
+                    <span style={{ fontSize: 10, color: 'var(--text-dimmer)', marginLeft: 8 }}>72時間有効</span>
+                  </div>
+                </div>
+                <div style={s.btnRow}>
+                  <button style={s.lineBtn}>LINEで送る</button>
+                  <button style={s.primary} onClick={handleReveal}>
+                    父が答えた（デモ）→
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -319,7 +335,9 @@ export default function Demo() {
         {step === 'reveal' && (
           <div style={{ ...s.card, animation: 'fadeUp 0.8s ease both' }}>
             <p style={s.stepLabel}>
-              {loading ? '読み込み中…' : `${fatherName || 'お父さん'}の答えが届いた`}
+              {loading ? '読み込み中…' : deceased
+                ? `${fatherName || 'お父さん'}ならこう答えたかもしれない`
+                : `${fatherName || 'お父さん'}の答えが届いた`}
             </p>
             {loading && <div style={s.spinner} />}
 
