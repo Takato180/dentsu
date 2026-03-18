@@ -87,7 +87,10 @@ ${qas.map(qa => `Q: ${qa.fatherPrompt}\n子の回答（参考）: ${qa.childAnsw
 
 Q1〜Q5の答えを1行ずつ出力。番号・記号なし。`
     const result = await model.generateContent(prompt)
-    const lines = result.response.text().trim().split('\n').filter(l => l.trim()).slice(0, qas.length)
+    const lines = result.response.text().trim().split('\n')
+      .map(l => l.replace(/^[\d\s\.\-・]+/, '').trim())
+      .filter(l => l.length > 0)
+      .slice(0, qas.length)
     return lines.length === qas.length ? lines : FALLBACK_FATHER
   } catch { return FALLBACK_FATHER }
 }
