@@ -2,91 +2,170 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-type Step = 'intro' | 'child-answer' | 'send' | 'father-answer' | 'result'
+type Step = 'intro' | 'child-answer' | 'send' | 'reveal' | 'poem' | 'call'
 
-interface QA { question: string; childAnswer: string; fatherAnswer: string }
+interface QA {
+  question: string
+  childPrompt: string   // 子に見せる質問
+  fatherPrompt: string  // 父に見せる質問
+  childAnswer: string
+  fatherAnswer: string
+}
 
-const DEFAULT_QAS: QA[] = [
-  { question: 'お父さんが人生で一番嬉しかった瞬間は？', childAnswer: '', fatherAnswer: '会社で一番の契約が取れた時' },
-  { question: 'お父さんの口癖は？', childAnswer: '', fatherAnswer: 'まあ、なんとかなるさ' },
-  { question: 'お父さんが後悔していることがあるとしたら？', childAnswer: '', fatherAnswer: '家族ともっと旅行に行けばよかった' },
+// ── 感動を誘う5問 ──────────────────────────────────────────────────────────────
+const BASE_QAS: Omit<QA, 'childAnswer' | 'fatherAnswer'>[] = [
+  {
+    question: '人生で一番嬉しかった瞬間',
+    childPrompt: 'お父さんが人生で一番嬉しかった瞬間は、どんな時だと思いますか？',
+    fatherPrompt: 'あなたが人生で一番嬉しかった瞬間は、どんな時ですか？',
+  },
+  {
+    question: '誰にも話したことのない自慢',
+    childPrompt: 'お父さんが、誰にも話したことのない自慢があるとしたら、何だと思いますか？',
+    fatherPrompt: '誰にも話したことのない、あなたの自慢はありますか？',
+  },
+  {
+    question: '一番ホッとする瞬間',
+    childPrompt: 'お父さんが一番ホッとするのは、どんな瞬間だと思いますか？',
+    fatherPrompt: 'あなたが一番ホッとするのは、どんな瞬間ですか？',
+  },
+  {
+    question: 'ずっと言いそびれていること',
+    childPrompt: 'お父さんがあなたに、ずっと言いそびれていることがあるとしたら、何だと思いますか？',
+    fatherPrompt: 'お子さんに、ずっと言いそびれていることはありますか？',
+  },
+  {
+    question: 'あなたとの一番古い記憶',
+    childPrompt: 'お父さんとの一番古い記憶は何ですか？',
+    fatherPrompt: 'お子さんとの一番古い記憶は何ですか？',
+  },
 ]
 
-async function generateFatherAnswers(questions: string[], childAnswers: string[], apiKey: string): Promise<string[]> {
-  if (!apiKey) return DEFAULT_QAS.map(q => q.fatherAnswer)
+const FALLBACK_FATHER: string[] = [
+  '会社で一番の契約が取れた時',
+  '無名のまま定年を迎えたこと。誰も気づかなかったけど、家族を守れた',
+  '早朝、誰も起きていない台所でお茶を飲む時',
+  'お前が生まれた日、泣いた。嬉しくて、怖くて',
+  '生まれて三日目、病院で抱いた時。指を握られた',
+]
+
+const FALLBACK_POEM = `あなたは、お父さんの答えを知っていましたか。
+
+お父さんにとって、人生で一番嬉しかった瞬間は、
+契約書にハンコを押した、あの夜のことでした。
+
+あなたがまだ言葉も知らない頃のことです。
+その夜、お父さんは何を思っていたのでしょう。
+帰りの電車で、窓に映る自分の顔を見ながら、
+「やっと、守れる」と思っていたのかもしれない。
+
+お父さんは、「あなたが生まれた時」とは言いませんでした。
+でもそれは、あなたのことを忘れていたからではない。
+
+父親というのは、愛情を証明するために働くのではなく、
+働くことで、愛情を黙って差し出す生き物なのかもしれません。
+
+ズレていました。
+でも、向いている方向は、ずっと同じだったかもしれない。`
+
+// ── API ──────────────────────────────────────────────────────────────────────
+
+async function getFatherAnswers(qas: QA[], apiKey: string): Promise<string[]> {
+  if (!apiKey) return FALLBACK_FATHER
   try {
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
     const prompt = `あなたは65歳の日本人の父親です。不器用で愛情表現が苦手ですが、家族を深く愛しています。
-子供が以下のようにあなたについて回答しました。あなた自身（父親）として同じ質問に答えてください。
-子供の回答とは"ズレる"ように答えてください。どちらが正しいわけではなく、視点が違うだけです。
+以下の質問に父親として正直に答えてください。子どもが予想しているものとは「少しズレた」答えになるようにしてください。
+嘘をつくのではなく、父親目線の本音で答えてください。各回答は1〜2文で。
 
-${questions.map((q, i) => `質問${i + 1}: ${q}\n子供の回答: ${childAnswers[i]}`).join('\n\n')}
+${qas.map((qa, _i) => `Q: ${qa.fatherPrompt}\n子の予想: ${qa.childAnswer}`).join('\n\n')}
 
-各質問への回答を1行ずつ、余計な説明なしで出力してください。`
+Q1〜Q5の答えを1行ずつ出力してください。番号や記号なし。`
     const result = await model.generateContent(prompt)
-    const lines = result.response.text().trim().split('\n').filter(l => l.trim()).slice(0, questions.length)
-    return lines.length === questions.length ? lines : DEFAULT_QAS.map(q => q.fatherAnswer)
-  } catch { return DEFAULT_QAS.map(q => q.fatherAnswer) }
+    const lines = result.response.text().trim().split('\n').filter(l => l.trim()).slice(0, qas.length)
+    return lines.length === qas.length ? lines : FALLBACK_FATHER
+  } catch { return FALLBACK_FATHER }
 }
 
-async function generateZurePoem(qas: QA[], apiKey: string): Promise<string> {
-  const fallback = `「お父さんの記憶の中のあなたは、まだ小さかった頃のまま止まっています。\nあなたの記憶の中の父は、いつも背中を見せていました。\nふたりとも、同じくらい、お互いを想っていた。」`
-  if (!apiKey) return fallback
+async function getZurePoem(qas: QA[], apiKey: string): Promise<string> {
+  if (!apiKey) return FALLBACK_POEM
   try {
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-    const prompt = `父と子の「答え合わせ」の結果です。このズレを、批判せず、詩のように美しく読み解いてください。
-温かく、少し切なく、でも最後は愛が感じられる文章にしてください。150字以内で。
+    const prompt = `父と子の「答え合わせ」の結果です。このズレを、是枝裕和映画のように静かに、美しく読み解いてください。
 
-${qas.map((qa, i) => `問${i + 1}: ${qa.question}\n子: ${qa.childAnswer}\n父: ${qa.fatherAnswer}`).join('\n\n')}
+${qas.map(qa => `【${qa.question}】\n子の答え: 「${qa.childAnswer}」\n父の答え: 「${qa.fatherAnswer}」`).join('\n\n')}
 
-かっこ「」でくくって出力してください。`
+ルール：
+・父を弁護しない。ただ解像度を上げる
+・「愛してる」とは言わずに愛を感じさせる
+・最後は「今夜」に着地させる
+・200〜250字以内
+・改行を使って詩のリズムにする`
     const result = await model.generateContent(prompt)
     return result.response.text().trim()
-  } catch { return fallback }
+  } catch { return FALLBACK_POEM }
 }
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Demo() {
   const navigate = useNavigate()
   const [step, setStep] = useState<Step>('intro')
   const [apiKey, setApiKey] = useState('')
   const [fatherName, setFatherName] = useState('')
-  const [qas, setQas] = useState<QA[]>(DEFAULT_QAS.map(q => ({ ...q, childAnswer: '' })))
+  const [deceased, setDeceased] = useState(false)
+  const [qas, setQas] = useState<QA[]>(BASE_QAS.map(q => ({ ...q, childAnswer: '', fatherAnswer: '' })))
   const [qIndex, setQIndex] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [poem, setPoem] = useState('')
   const [revealIndex, setRevealIndex] = useState(-1)
+  const [poem, setPoem] = useState('')
+  const [poemLines, setPoemLines] = useState<string[]>([])
+  const [visibleLines, setVisibleLines] = useState(0)
+  const [letterText, setLetterText] = useState('')
 
-  const handleChildAnswer = (val: string) => {
+  const handleChildAnswer = (val: string) =>
     setQas(prev => prev.map((qa, i) => i === qIndex ? { ...qa, childAnswer: val } : qa))
-  }
 
   const handleNextChild = () => {
     if (qIndex < qas.length - 1) setQIndex(i => i + 1)
     else setStep('send')
   }
 
-  const handleFatherReveal = async () => {
-    setStep('father-answer')
+  const handleReveal = async () => {
+    setStep('reveal')
     setLoading(true)
-    const answers = await generateFatherAnswers(qas.map(q => q.question), qas.map(q => q.childAnswer), apiKey)
-    setQas(prev => prev.map((qa, i) => ({ ...qa, fatherAnswer: answers[i] })))
+    const answers = await getFatherAnswers(qas, apiKey)
+    const updated = qas.map((qa, i) => ({ ...qa, fatherAnswer: answers[i] }))
+    setQas(updated)
     setLoading(false)
-    // 順番に父の答えを表示
-    for (let i = 0; i < qas.length; i++) {
-      await new Promise(r => setTimeout(r, 800 + i * 600))
+    // 順番に浮かび上がる
+    for (let i = 0; i < updated.length; i++) {
+      await new Promise(r => setTimeout(r, i === 0 ? 600 : 1200))
       setRevealIndex(i)
     }
   }
 
-  const handleResult = async () => {
+  const handlePoem = async () => {
+    setStep('poem')
     setLoading(true)
-    setStep('result')
-    const p = await generateZurePoem(qas, apiKey)
+    const p = await getZurePoem(qas, apiKey)
     setPoem(p)
+    const lines = p.split('\n').filter(l => l !== undefined)
+    setPoemLines(lines)
     setLoading(false)
+    // 一行ずつ現れる
+    for (let i = 0; i < lines.length; i++) {
+      await new Promise(r => setTimeout(r, 700 + i * 400))
+      setVisibleLines(i + 1)
+    }
+    await new Promise(r => setTimeout(r, 800))
+    setStep('call')
   }
+
+  const zureCount = qas.filter(qa => qa.childAnswer && qa.fatherAnswer &&
+    qa.childAnswer.slice(0, 4) !== qa.fatherAnswer.slice(0, 4)).length
 
   return (
     <div style={s.root}>
@@ -97,26 +176,32 @@ export default function Demo() {
 
       <div style={s.body}>
 
+        {/* ── INTRO ── */}
         {step === 'intro' && (
           <div style={{ ...s.card, animation: 'fadeUp 0.8s ease both' }}>
-            <p style={s.stepLabel}>はじめに</p>
-            <h2 style={s.cardTitle}>父の日に、<br />答え合わせをしよう。</h2>
-            <p style={s.cardSub}>
-              お父さんについての問いに、まずあなたが答えます。<br />
+            <p style={s.stepLabel}>父の日に</p>
+            <h2 style={s.title}>答え合わせを、しよう。</h2>
+            <p style={s.sub}>
+              お父さんについての5つの問いに、まずあなたが答えます。<br />
               次にお父さんに同じ問いを送ります。<br />
               ふたりの答えのズレを、AIが読み解きます。
             </p>
             <div style={s.formCol}>
               <label style={s.label}>
                 お父さんの名前（任意）
-                <input style={s.input} placeholder="例：健一" value={fatherName}
-                  onChange={e => setFatherName(e.target.value)} />
+                <input style={s.input} placeholder="例：健一"
+                  value={fatherName} onChange={e => setFatherName(e.target.value)} />
               </label>
               <label style={s.label}>
                 Gemini APIキー（任意）
-                <input style={s.input} type="password" placeholder="AIzaSy... （空欄でもデモできます）"
+                <input style={s.input} type="password" placeholder="AIzaSy...（空欄でもデモできます）"
                   value={apiKey} onChange={e => setApiKey(e.target.value)} />
-                <span style={s.note}>キーはブラウザ内のみで使用。外部送信なし。</span>
+                <span style={s.note}>キーはブラウザ内のみ。外部送信なし。</span>
+              </label>
+              <label style={{ ...s.label, flexDirection: 'row', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                <input type="checkbox" checked={deceased} onChange={e => setDeceased(e.target.checked)}
+                  style={{ accentColor: 'var(--amber)' }} />
+                <span>お父さんはもう亡くなっています</span>
               </label>
             </div>
             <button style={{ ...s.primary, alignSelf: 'flex-end' }} onClick={() => setStep('child-answer')}>
@@ -125,131 +210,163 @@ export default function Demo() {
           </div>
         )}
 
+        {/* ── CHILD ANSWER ── */}
         {step === 'child-answer' && (
-          <div style={{ ...s.card, animation: 'fadeUp 0.8s ease both' }}>
-            <p style={s.stepLabel}>あなたの回答 {qIndex + 1} / {qas.length}</p>
+          <div style={{ ...s.card, animation: 'fadeUp 0.8s ease both' }} key={qIndex}>
+            <p style={s.stepLabel}>{qIndex + 1} / {qas.length}</p>
             <div style={s.questionCard}>
-              <p style={s.questionMark}>"</p>
-              <p style={s.questionText}>{qas[qIndex].question}</p>
+              <p style={s.qMark}>"</p>
+              <p style={s.qText}>{qas[qIndex].childPrompt}</p>
             </div>
-            <p style={s.cardSub}>お父さんが何と答えるか、想像しながら答えてください</p>
-            <textarea
-              style={s.textarea}
-              placeholder="自由に書いてください…"
+            <textarea style={s.textarea} placeholder="自由に、正直に…"
               value={qas[qIndex].childAnswer}
               onChange={e => handleChildAnswer(e.target.value)}
-              rows={3}
+              rows={3} autoFocus
             />
             <div style={s.btnRow}>
               {qIndex > 0 && <button style={s.ghost} onClick={() => setQIndex(i => i - 1)}>← 前へ</button>}
               <button
-                style={{ ...s.primary, opacity: qas[qIndex].childAnswer.trim() ? 1 : 0.4 }}
+                style={{ ...s.primary, opacity: qas[qIndex].childAnswer.trim() ? 1 : 0.35 }}
                 disabled={!qas[qIndex].childAnswer.trim()}
                 onClick={handleNextChild}
               >
-                {qIndex < qas.length - 1 ? '次の問いへ →' : 'お父さんに送る →'}
+                {qIndex < qas.length - 1 ? '次へ →' : 'お父さんへ送る →'}
               </button>
             </div>
           </div>
         )}
 
+        {/* ── SEND ── */}
         {step === 'send' && (
-          <div style={{ ...s.card, ...s.centerCard, animation: 'fadeUp 0.8s ease both' }}>
+          <div style={{ ...s.card, ...s.center, animation: 'fadeUp 0.8s ease both' }}>
             <p style={s.stepLabel}>お父さんへ</p>
-            <h2 style={s.cardTitle}>リンクを送ろう</h2>
-            <p style={s.cardSub}>
-              {fatherName || 'お父さん'}に、このメッセージだけ送ってください。<br />
-              理由は書かなくていい。
-            </p>
-            <div style={s.messagePreview}>
+            <h2 style={s.title}>リンクを送ろう</h2>
+            <p style={s.sub}>理由は書かなくていい。</p>
+            <div style={s.messageBox}>
               <p style={s.messageText}>
-                「一緒にやってほしいことがある。<br />
-                5分だけ時間ちょうだい。」
+                「一緒にやってほしいことがある。<br />5分だけ時間ちょうだい。」
               </p>
-              <div style={{ marginTop: 12, padding: '10px 16px', background: 'rgba(200,145,58,0.08)', borderRadius: 2 }}>
-                <p style={{ fontSize: 12, color: 'var(--amber)', letterSpacing: '0.05em' }}>
-                  chichikoe.app/father/xxxxx
-                </p>
+              <div style={s.linkPreview}>
+                <span style={{ fontSize: 12, color: 'var(--amber)' }}>chichitoi.app/f/xxxxxx</span>
               </div>
             </div>
             <div style={s.btnRow}>
-              <button style={{ ...s.shareBtn, background: '#06C755', color: '#fff' }}>
-                LINEで送る
-              </button>
-              <button style={s.primary} onClick={handleFatherReveal}>
-                父が答えた（デモ） →
+              <button style={{ ...s.lineBtn }}>LINEで送る</button>
+              <button style={s.primary} onClick={handleReveal}>
+                {deceased ? '父の答えを想像する' : '父が答えた（デモ）→'}
               </button>
             </div>
           </div>
         )}
 
-        {step === 'father-answer' && (
+        {/* ── REVEAL ── */}
+        {step === 'reveal' && (
           <div style={{ ...s.card, animation: 'fadeUp 0.8s ease both' }}>
-            <p style={s.stepLabel}>{fatherName || 'お父さん'}の回答</p>
-            <h2 style={s.cardTitle}>
-              {loading && revealIndex < 0 ? '読み込み中…' : '答えが届いた'}
-            </h2>
-            <div style={s.formCol}>
+            <p style={s.stepLabel}>
+              {loading ? '読み込み中…' : `${fatherName || 'お父さん'}の答えが届いた`}
+            </p>
+            {loading && <div style={s.spinner} />}
+
+            <div style={s.revealList}>
               {qas.map((qa, i) => (
-                <div key={i} style={{
-                  ...s.answerRow,
-                  opacity: revealIndex >= i ? 1 : 0.15,
-                  transition: 'opacity 0.6s ease',
-                }}>
-                  <p style={s.answerQ}>{qa.question}</p>
-                  <div style={s.answerPair}>
-                    <div style={s.answerBox}>
-                      <p style={s.answerLabel}>あなた</p>
-                      <p style={s.answerText}>{qa.childAnswer}</p>
-                    </div>
-                    <div style={s.divider} />
-                    <div style={{ ...s.answerBox, alignItems: 'flex-end' as const }}>
-                      <p style={{ ...s.answerLabel, color: 'var(--amber)' }}>{fatherName || '父'}</p>
-                      <p style={{ ...s.answerText, textAlign: 'right' as const }}>
-                        {revealIndex >= i ? qa.fatherAnswer : '…'}
-                      </p>
-                    </div>
+                <div key={i} style={s.revealItem}>
+                  {/* 子の答え（常に表示） */}
+                  <p style={s.revealQ}>{qa.question}</p>
+                  <div style={s.revealChild}>
+                    <span style={s.revealLabelChild}>あなた</span>
+                    <p style={s.revealTextChild}>{qa.childAnswer}</p>
+                  </div>
+
+                  {/* 父の答え（順番に浮かび上がる） */}
+                  <div style={{
+                    ...s.revealFather,
+                    opacity: revealIndex >= i ? 1 : 0,
+                    transform: revealIndex >= i ? 'translateY(0)' : 'translateY(10px)',
+                    transition: 'all 0.9s ease',
+                  }}>
+                    <span style={s.revealLabelFather}>{fatherName || '父'}</span>
+                    <p style={s.revealTextFather}>
+                      {revealIndex >= i ? `「${qa.fatherAnswer}」` : ''}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
+
             {revealIndex >= qas.length - 1 && (
-              <button style={{ ...s.primary, alignSelf: 'center', marginTop: 16, animation: 'fadeUp 0.8s ease both' }} onClick={handleResult}>
-                ズレを読み解く ✦
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, animation: 'fadeUp 0.8s ease both' }}>
+                <p style={{ fontSize: 22, fontFamily: 'var(--serif)', color: 'var(--text)', letterSpacing: '0.05em' }}>
+                  {zureCount}問、ズレていた。
+                </p>
+                <button style={s.primary} onClick={handlePoem}>ズレを読み解く ✦</button>
+              </div>
             )}
           </div>
         )}
 
-        {step === 'result' && (
-          <div style={{ ...s.card, ...s.centerCard, animation: 'fadeUp 0.8s ease both' }}>
-            <p style={s.stepLabel}>AIが読み解いたズレ</p>
+        {/* ── POEM ── */}
+        {step === 'poem' && (
+          <div style={{ ...s.card, ...s.center, animation: 'fadeUp 0.8s ease both' }}>
             {loading ? (
               <div style={s.spinner} />
             ) : (
-              <>
-                <div style={s.poem}>
-                  <p style={s.poemText}>{poem}</p>
-                </div>
-                <div style={s.zureScore}>
-                  <p style={s.zureLabel}>ズレ</p>
-                  <p style={s.zureNum}>
-                    {qas.length}問中{Math.floor(qas.length * 0.6)}問
+              <div style={s.poemBox}>
+                {poemLines.slice(0, visibleLines).map((line, i) => (
+                  <p key={i} style={{
+                    ...s.poemLine,
+                    opacity: i < visibleLines ? 1 : 0,
+                    transition: 'opacity 0.8s ease',
+                    minHeight: line === '' ? '1em' : 'auto',
+                  }}>
+                    {line || '\u00A0'}
                   </p>
-                </div>
-                <div style={s.callSection}>
-                  <p style={s.callSub}>これを、直接話してみませんか？</p>
-                  <button style={{ ...s.primary, fontSize: '16px', padding: '16px 48px' }}>
-                    📞 {fatherName || 'お父さん'}に電話する
-                  </button>
-                </div>
-                <button style={s.shareCard} onClick={() => {
-                  navigate('/complete', { state: { qas, fatherName, poem } })
-                }}>
-                  ズレカードをつくる →
-                </button>
-              </>
+                ))}
+              </div>
             )}
+          </div>
+        )}
+
+        {/* ── CALL ── */}
+        {step === 'call' && (
+          <div style={{ ...s.card, ...s.center, animation: 'fadeUp 1s ease both' }}>
+            <div style={s.poemBox}>
+              {poemLines.map((line, i) => (
+                <p key={i} style={{ ...s.poemLine, minHeight: line === '' ? '1em' : 'auto' }}>
+                  {line || '\u00A0'}
+                </p>
+              ))}
+            </div>
+
+            <div style={s.callSection}>
+              <p style={s.callMain}>
+                {fatherName || 'お父さん'}、今何してるかな。
+              </p>
+
+              {deceased ? (
+                <div style={s.deceasedBox}>
+                  <p style={s.deceasedLabel}>伝えたかった言葉を、ここに残してください</p>
+                  <textarea style={{ ...s.textarea, border: 'none', borderBottom: '1px solid var(--text-dimmer)', borderRadius: 0, background: 'transparent', textAlign: 'center' }}
+                    placeholder="送信ボタンはありません。ただ、書いてください。"
+                    value={letterText} onChange={e => setLetterText(e.target.value)}
+                    rows={4}
+                  />
+                </div>
+              ) : (
+                <p style={s.callHint}>（声、聞きたくなったら）</p>
+              )}
+
+              {!deceased && (
+                <button style={s.callBtn}>
+                  📞 {fatherName || 'お父さん'}に電話する
+                </button>
+              )}
+            </div>
+
+            <button style={s.cardLink} onClick={() =>
+              navigate('/complete', { state: { qas, fatherName, poem, zureCount } })
+            }>
+              ズレカードをつくる →
+            </button>
           </div>
         )}
       </div>
@@ -258,13 +375,13 @@ export default function Demo() {
 }
 
 function StepDots({ step }: { step: Step }) {
-  const steps: Step[] = ['intro', 'child-answer', 'send', 'father-answer', 'result']
+  const steps: Step[] = ['intro', 'child-answer', 'send', 'reveal', 'poem', 'call']
   const idx = steps.indexOf(step)
   return (
-    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
       {steps.map((_, i) => (
         <div key={i} style={{
-          width: i <= idx ? '20px' : '6px', height: '4px', borderRadius: '2px',
+          width: i <= idx ? '18px' : '5px', height: '3px', borderRadius: '2px',
           background: i <= idx ? 'var(--amber)' : 'var(--text-dimmer)',
           transition: 'all 0.4s ease',
         }} />
@@ -275,42 +392,46 @@ function StepDots({ step }: { step: Step }) {
 
 const s: Record<string, React.CSSProperties> = {
   root: { minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '22px 36px', borderBottom: '1px solid var(--text-dimmer)' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 32px', borderBottom: '1px solid var(--text-dimmer)' },
   back: { fontSize: '13px', color: 'var(--text-dim)', letterSpacing: '0.05em' },
   body: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px 80px' },
-  card: { width: '100%', maxWidth: '540px', display: 'flex', flexDirection: 'column', gap: '22px' },
-  centerCard: { alignItems: 'center', textAlign: 'center' },
-  stepLabel: { fontSize: '11px', letterSpacing: '0.18em', color: 'var(--amber)' },
-  cardTitle: { fontFamily: 'var(--serif)', fontSize: 'clamp(22px,4vw,32px)', fontWeight: 300, color: 'var(--text)', letterSpacing: '0.05em', lineHeight: 1.7 },
-  cardSub: { fontSize: '14px', color: 'var(--text-dim)', lineHeight: 1.9 },
-  formCol: { display: 'flex', flexDirection: 'column' as const, gap: '18px' },
-  label: { display: 'flex', flexDirection: 'column' as const, gap: '8px', fontSize: '12px', letterSpacing: '0.08em', color: 'var(--text-dim)' },
+  card: { width: '100%', maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '24px' },
+  center: { alignItems: 'center', textAlign: 'center' },
+  stepLabel: { fontSize: '11px', letterSpacing: '0.2em', color: 'var(--amber)' },
+  title: { fontFamily: 'var(--serif)', fontSize: 'clamp(24px,4vw,34px)', fontWeight: 300, color: 'var(--text)', letterSpacing: '0.05em', lineHeight: 1.7 },
+  sub: { fontSize: '14px', color: 'var(--text-dim)', lineHeight: 2 },
+  formCol: { display: 'flex', flexDirection: 'column' as const, gap: '16px' },
+  label: { display: 'flex', flexDirection: 'column' as const, gap: '8px', fontSize: '12px', letterSpacing: '0.06em', color: 'var(--text-dim)', cursor: 'default' },
   input: { background: 'rgba(255,255,255,0.04)', border: '1px solid var(--text-dimmer)', borderRadius: '2px', color: 'var(--text)', fontSize: '15px', padding: '12px 16px', outline: 'none' },
   note: { fontSize: '11px', color: 'var(--text-dimmer)' },
-  primary: { padding: '14px 32px', background: 'var(--amber)', color: '#0a0a0a', borderRadius: '2px', fontSize: '15px', letterSpacing: '0.08em', fontWeight: 400, transition: 'opacity 0.2s' },
-  ghost: { padding: '14px 24px', border: '1px solid var(--text-dimmer)', borderRadius: '2px', fontSize: '14px', color: 'var(--text-dim)' },
-  btnRow: { display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' as const },
-  questionCard: { position: 'relative', padding: '28px 36px', border: '1px solid rgba(200,145,58,0.25)', borderRadius: '2px', textAlign: 'center' },
-  questionMark: { position: 'absolute', top: '10px', left: '18px', fontFamily: 'var(--serif)', fontSize: '32px', color: 'var(--amber)', opacity: 0.25, lineHeight: 1 },
-  questionText: { fontFamily: 'var(--serif)', fontSize: 'clamp(16px,3vw,20px)', lineHeight: 1.9, color: 'var(--text)', fontWeight: 300 },
-  textarea: { background: 'rgba(255,255,255,0.04)', border: '1px solid var(--text-dimmer)', borderRadius: '2px', color: 'var(--text)', fontSize: '15px', padding: '14px 16px', outline: 'none', resize: 'none' as const, lineHeight: 1.8 },
-  messagePreview: { padding: '24px', border: '1px solid var(--text-dimmer)', borderRadius: '2px', textAlign: 'center' },
-  messageText: { fontFamily: 'var(--serif)', fontSize: '17px', color: 'var(--text)', lineHeight: 2, fontWeight: 300 },
-  shareBtn: { padding: '14px 24px', borderRadius: '2px', fontSize: '15px', letterSpacing: '0.05em', fontWeight: 400 },
-  answerRow: { display: 'flex', flexDirection: 'column' as const, gap: '10px', padding: '16px 0', borderBottom: '1px solid var(--text-dimmer)' },
-  answerQ: { fontSize: '12px', color: 'var(--text-dim)', letterSpacing: '0.05em' },
-  answerPair: { display: 'flex', gap: '0', alignItems: 'stretch' },
-  answerBox: { flex: 1, display: 'flex', flexDirection: 'column' as const, gap: '4px' },
-  answerLabel: { fontSize: '10px', letterSpacing: '0.12em', color: 'var(--text-dimmer)' },
-  answerText: { fontSize: '14px', color: 'var(--text)', lineHeight: 1.8 },
-  divider: { width: '1px', background: 'rgba(200,145,58,0.2)', margin: '0 16px' },
-  poem: { padding: '28px 32px', border: '1px solid rgba(200,145,58,0.2)', borderRadius: '2px', background: 'rgba(200,145,58,0.03)', maxWidth: '460px' },
-  poemText: { fontFamily: 'var(--serif)', fontSize: '15px', lineHeight: 2.3, color: 'rgba(232,224,213,0.8)', fontStyle: 'italic', whiteSpace: 'pre-wrap' as const },
-  zureScore: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '4px' },
-  zureLabel: { fontSize: '11px', letterSpacing: '0.18em', color: 'var(--amber)' },
-  zureNum: { fontFamily: 'var(--serif)', fontSize: '22px', color: 'var(--text)' },
-  callSection: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '16px' },
-  callSub: { fontSize: '14px', color: 'var(--text-dim)', letterSpacing: '0.05em' },
-  shareCard: { fontSize: '13px', color: 'var(--text-dimmer)', letterSpacing: '0.08em', textDecoration: 'underline', textDecorationColor: 'var(--text-dimmer)' },
-  spinner: { width: '44px', height: '44px', borderRadius: '50%', border: '2px solid var(--text-dimmer)', borderTopColor: 'var(--amber)', animation: 'rotateSlow 1s linear infinite' },
+  primary: { padding: '13px 30px', background: 'var(--amber)', color: '#0a0a0a', borderRadius: '2px', fontSize: '14px', letterSpacing: '0.08em', fontWeight: 400, transition: 'opacity 0.2s', alignSelf: 'flex-end' as const },
+  ghost: { padding: '13px 22px', border: '1px solid var(--text-dimmer)', borderRadius: '2px', fontSize: '14px', color: 'var(--text-dim)' },
+  btnRow: { display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' as const },
+  questionCard: { position: 'relative', padding: '28px 32px', border: '1px solid rgba(200,145,58,0.2)', borderRadius: '2px', textAlign: 'center' },
+  qMark: { position: 'absolute', top: '10px', left: '16px', fontFamily: 'var(--serif)', fontSize: '30px', color: 'var(--amber)', opacity: 0.2, lineHeight: 1 },
+  qText: { fontFamily: 'var(--serif)', fontSize: 'clamp(15px,2.5vw,19px)', lineHeight: 2, color: 'var(--text)', fontWeight: 300 },
+  textarea: { background: 'rgba(255,255,255,0.04)', border: '1px solid var(--text-dimmer)', borderRadius: '2px', color: 'var(--text)', fontSize: '15px', padding: '14px 16px', outline: 'none', resize: 'none' as const, lineHeight: 1.9, width: '100%' },
+  messageBox: { padding: '28px', border: '1px solid var(--text-dimmer)', borderRadius: '2px', display: 'flex', flexDirection: 'column' as const, gap: '16px', textAlign: 'center' },
+  messageText: { fontFamily: 'var(--serif)', fontSize: '18px', color: 'var(--text)', lineHeight: 2, fontWeight: 300 },
+  linkPreview: { padding: '10px 16px', background: 'rgba(200,145,58,0.06)', borderRadius: '2px', textAlign: 'center' },
+  lineBtn: { padding: '13px 22px', background: '#06C755', color: '#fff', borderRadius: '2px', fontSize: '14px', letterSpacing: '0.05em', fontWeight: 400 },
+  revealList: { display: 'flex', flexDirection: 'column' as const, gap: '0' },
+  revealItem: { padding: '20px 0', borderBottom: '1px solid var(--text-dimmer)', display: 'flex', flexDirection: 'column' as const, gap: '12px' },
+  revealQ: { fontSize: '11px', letterSpacing: '0.1em', color: 'var(--amber)', opacity: 0.8 },
+  revealChild: { display: 'flex', flexDirection: 'column' as const, gap: '4px' },
+  revealLabelChild: { fontSize: '10px', letterSpacing: '0.12em', color: 'var(--text-dimmer)' },
+  revealTextChild: { fontSize: '15px', color: 'rgba(232,224,213,0.65)', lineHeight: 1.8 },
+  revealFather: { display: 'flex', flexDirection: 'column' as const, gap: '4px', paddingLeft: '16px', borderLeft: '2px solid rgba(200,145,58,0.4)' },
+  revealLabelFather: { fontSize: '10px', letterSpacing: '0.12em', color: 'var(--amber)' },
+  revealTextFather: { fontFamily: 'var(--serif)', fontSize: '17px', color: 'var(--text)', lineHeight: 1.9 },
+  spinner: { width: '40px', height: '40px', borderRadius: '50%', border: '2px solid var(--text-dimmer)', borderTopColor: 'var(--amber)', animation: 'rotateSlow 1s linear infinite', alignSelf: 'center' as const },
+  poemBox: { padding: '0 8px', maxWidth: '440px', textAlign: 'left' as const },
+  poemLine: { fontFamily: 'var(--serif)', fontSize: '15px', lineHeight: 2.4, color: 'rgba(232,224,213,0.8)', fontWeight: 300, letterSpacing: '0.03em' },
+  callSection: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '20px', marginTop: '16px' },
+  callMain: { fontFamily: 'var(--serif)', fontSize: 'clamp(20px,3vw,28px)', color: 'var(--text)', letterSpacing: '0.05em', lineHeight: 1.8 },
+  callHint: { fontSize: '12px', color: 'var(--text-dimmer)', letterSpacing: '0.1em' },
+  callBtn: { padding: '16px 48px', background: 'var(--amber)', color: '#0a0a0a', borderRadius: '2px', fontSize: '16px', letterSpacing: '0.08em', fontWeight: 400 },
+  deceasedBox: { display: 'flex', flexDirection: 'column' as const, gap: '12px', width: '100%', maxWidth: '380px' },
+  deceasedLabel: { fontSize: '13px', color: 'var(--text-dim)', letterSpacing: '0.04em', lineHeight: 1.9 },
+  cardLink: { fontSize: '12px', color: 'var(--text-dimmer)', textDecoration: 'underline', textDecorationColor: 'var(--text-dimmer)', letterSpacing: '0.06em' },
 }
