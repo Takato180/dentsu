@@ -24,8 +24,7 @@ AIがふたりのズレを詩として読み解き、子が父に言いそびれ
 
 ### ランディングページ
 
-<!-- スクリーンショットを撮影してここに追加してください -->
-<!-- 例: ![Landing](docs/screenshots/landing.png) -->
+![Landing](docs/screenshots/landing.png)
 
 `/` — ヒーローコピー・カウントダウン・ピッチ動画
 
@@ -33,7 +32,7 @@ AIがふたりのズレを詩として読み解き、子が父に言いそびれ
 
 ### デモ画面 — 問いに答える
 
-<!-- ![Child Answer](docs/screenshots/child-answer.png) -->
+![Child Answer](docs/screenshots/child-answer.png)
 
 `/demo` ステップ1 — 子が5問に答える画面
 
@@ -41,15 +40,11 @@ AIがふたりのズレを詩として読み解き、子が父に言いそびれ
 
 ### デモ画面 — 父の答えが届く
 
-<!-- ![Reveal](docs/screenshots/reveal.png) -->
-
 `/demo` ステップ4 — 父の回答が一問ずつ出現、共鳴率バー
 
 ---
 
 ### デモ画面 — ズレを読む詩
-
-<!-- ![Poem](docs/screenshots/poem.png) -->
 
 `/demo` ステップ5 — AIが生成した詩が一行ずつフェードイン
 
@@ -65,7 +60,7 @@ AIがふたりのズレを詩として読み解き、子が父に言いそびれ
 
 ### ズレカード（Complete）
 
-<!-- ![Complete](docs/screenshots/complete.png) -->
+![Complete](docs/screenshots/complete.png)
 
 `/complete` — SNSシェア用カード、詩・スコア・docomo CTA
 
@@ -73,7 +68,7 @@ AIがふたりのズレを詩として読み解き、子が父に言いそびれ
 
 ### キャンペーンデータ（Dashboard）
 
-<!-- ![Dashboard](docs/screenshots/dashboard.png) -->
+![Dashboard](docs/screenshots/dashboard.png)
 
 `/dashboard` — 参加者数・ファネル・都道府県マップ・スポンサー提案
 
