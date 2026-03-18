@@ -174,12 +174,6 @@ export default function Landing() {
 
       <footer style={s.footer}>
         <p>父問 — ズレが、愛だった。</p>
-        <p style={{ marginTop: '6px', opacity: 0.4 }}>
-          <span
-            style={{ cursor: 'pointer', textDecoration: 'underline' }}
-            onClick={() => navigate('/dashboard')}
-          >キャンペーンデータ</span>
-        </p>
       </footer>
     </div>
   )

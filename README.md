@@ -6,6 +6,34 @@
 
 ---
 
+## スクリーンショット
+
+### 1. ランディングページ
+![Landing](docs/screenshots/landing.png)
+
+### 2. デモ — イントロ（名前・APIキー入力）
+![Demo Intro](docs/screenshots/demo-intro.png)
+
+### 3. デモ — 問いに答える
+![Child Answer](docs/screenshots/child-answer.png)
+
+### 4. デモ — リンクを送る
+![Send](docs/screenshots/send.png)
+
+### 5. デモ — 父の答えが届く（共鳴率バー）
+![Reveal](docs/screenshots/reveal.png)
+
+### 6. デモ — ズレを読む詩
+![Poem](docs/screenshots/poem.png)
+
+### 7. デモ — 電話CTA・未送信の言葉
+![Call](docs/screenshots/call.png)
+
+### 8. ズレカード（Complete）
+![Complete](docs/screenshots/complete.png)
+
+---
+
 ## コンセプト
 
 父と子が、同じ5つの問いに「別々に」答える。
@@ -17,60 +45,6 @@ AIがふたりのズレを詩として読み解き、子が父に言いそびれ
 > 「ありがとうと、毎朝、心の中で言っていた」（父）
 >
 > ズレが、愛だった。
-
----
-
-## スクリーンショット
-
-### ランディングページ
-
-![Landing](docs/screenshots/landing.png)
-
-`/` — ヒーローコピー・カウントダウン・ピッチ動画
-
----
-
-### デモ画面 — 問いに答える
-
-![Child Answer](docs/screenshots/child-answer.png)
-
-`/demo` ステップ1 — 子が5問に答える画面
-
----
-
-### デモ画面 — 父の答えが届く
-
-`/demo` ステップ4 — 父の回答が一問ずつ出現、共鳴率バー
-
----
-
-### デモ画面 — ズレを読む詩
-
-`/demo` ステップ5 — AIが生成した詩が一行ずつフェードイン
-
----
-
-### デモ画面 — 未送信の言葉
-
-<!-- ![Call](docs/screenshots/call.png) -->
-
-`/demo` ステップ6 — AIが抽出した「言いそびれていた言葉」＋電話CTA
-
----
-
-### ズレカード（Complete）
-
-![Complete](docs/screenshots/complete.png)
-
-`/complete` — SNSシェア用カード、詩・スコア・docomo CTA
-
----
-
-### キャンペーンデータ（Dashboard）
-
-![Dashboard](docs/screenshots/dashboard.png)
-
-`/dashboard` — 参加者数・ファネル・都道府県マップ・スポンサー提案
 
 ---
 
@@ -96,7 +70,6 @@ AIがふたりのズレを詩として読み解き、子が父に言いそびれ
 - **ズレカード** — 結果をSNSシェア可能なカードとして表示
 - **故人モード** — お父さんが亡くなっている場合、AIが記憶から答えを想像する。電話CTAなし、追悼テキストエリア表示
 - **Remotionピッチ動画** — 60秒・7シーンのプレゼン用動画（ランディングに埋め込み）
-- **キャンペーンダッシュボード** — 参加者数・ファネル・都道府県マップ・スポンサー提案
 
 ---
 
@@ -125,7 +98,7 @@ npm run build
 # dist/ が生成される
 ```
 
-GitHub Actions（`.github/workflows/deploy.yml`）でmainブランチへのpush時に自動デプロイ。
+GitHub Actions（`.github/workflows/deploy.yml`）でmainブランチへのpush時に自動デプロイ。  
 公開URL: `https://takato180.github.io/dentsu/`
 
 ---
@@ -139,7 +112,6 @@ chichikoe/
 │   │   ├── Landing.tsx     # ランディングページ（ヒーロー・動画・About）
 │   │   ├── Demo.tsx        # メインフロー（5問 → AI解析 → 詩 → CTA）
 │   │   ├── Complete.tsx    # ズレカード・シェア・docomo CTA
-│   │   └── Dashboard.tsx   # キャンペーンデータ・スポンサー提案
 │   ├── remotion/
 │   │   └── ChichikoePitch.tsx  # 60秒ピッチ動画（7シーン）
 │   └── App.tsx             # ルーティング
@@ -161,8 +133,6 @@ chichikoe/
 ---
 
 ## ブリーフ対応
-
-電通ブリーフの評価軸への対応：
 
 - **「新しい父の日体験」** — ギフト（モノ）ではなく、ズレ（会話）をギフトにする
 - **「関係性がどう変わるか」** — 未送信メッセージのLINE送信・電話CTAが関係変化の証跡
